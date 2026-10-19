@@ -1,0 +1,113 @@
+name: Publish template gallery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/template-gallery/**
+      - tools/template_gallery/**
+      - test/template_gallery/**
+      - .github/workflows/deploy-gallery.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      gallery-only: ${{ steps.changes.outputs.gallery-only }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Check whether the app also needs rebuilding
+        id: changes
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import fnmatch
+          import os
+          import subprocess
+
+          patterns = ['docs/template-gallery/**', 'tools/template_gallery/**',
+                      'test/template_gallery/**', '.github/workflows/deploy-gallery.yml',
+                      '.github/workflows/deploy-pages.yml', '.github/workflows/template-gallery.yml',
+                      '.gitattributes', 'README.md']
+          only = os.environ['EVENT'] == 'workflow_dispatch'
+          if not only:
+              paths = subprocess.check_output(
+                  ['git', 'diff', '--name-only', os.environ['BEFORE'], os.environ['AFTER']],
+                  text=True).splitlines()
+              only = bool(paths) and all(any(fnmatch.fnmatch(p, pattern) for pattern in patterns)
+                                         for p in paths)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write(f'gallery-only={str(only).lower()}\n')
+          PY
+
+  deploy:
+    needs: changes
+    if: needs.changes.outputs.gallery-only == 'true'
+    runs-on: ubuntu-24.04
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate the complete gallery
+        run: python3 tools/template_gallery/validate.py docs/template-gallery
+      - name: Find the last successfully published app build
+        id: app
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner, repo} = context.repo;
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner, repo, workflow_id: 'deploy-pages.yml', branch: 'main',
+              status: 'success', per_page: 30
+            });
+            for (const run of runs) {
+              const {data} = await github.rest.actions.listWorkflowRunArtifacts({
+                owner, repo, run_id: run.id, per_page: 100
+              });
+              const artifact = data.artifacts.find(a => !a.expired &&
+                a.name.startsWith('sketcher-') && a.name.endsWith('-wasm'));
+              if (artifact) {
+                core.setOutput('run', run.id);
+                core.setOutput('artifact', artifact.name);
+                core.info(`Reusing the app from successful Pages run ${run.id}`);
+                return;
+              }
+            }
+            throw new Error('No published app artifact remains. Run deploy-pages.yml to rebuild it.');
+      - name: Download the published WebAssembly app
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ steps.app.outputs.artifact }}
+          run-id: ${{ steps.app.outputs.run }}
+          github-token: ${{ github.token }}
+          path: site
+      - name: Add the gallery
+        run: |
+          mv site/wasm_shell.html site/index.html
+          cp -R docs/template-gallery site/template-gallery
+          touch site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -36,6 +36,11 @@ To enable the demo on a fork:
 After the first successful deployment, the demo is available at
 `https://<github-username>.github.io/<repository-name>/`.
 
+The [template comparison gallery](tools/template_gallery/README.md) is published
+alongside the demo at `/template-gallery/`. It compares 2–5 public molecules per
+ring template with ring templates enabled and disabled on the native 26-4 build.
+The page includes build provenance, geometry flags, and downloadable results.
+
 ## Build Prerequisites
 
 - A C++ compiler supporting C++20 or later

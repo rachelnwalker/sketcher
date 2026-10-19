@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Template lab · Sketcher</title>
+    <link rel="stylesheet" href="gallery.css" />
+    <script type="module" src="gallery.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="../"
+        ><span class="brand-icon">⌬</span> Sketcher <span class="slash">/</span>
+        <strong>Template lab</strong></a
+      >
+      <div class="top-actions">
+        <span id="runtime" class="runtime">Loading build…</span
+        ><button id="build-details" class="quiet">Build details</button
+        ><a class="button quiet" href="results.csv" download>Results CSV ↗</a>
+      </div>
+    </header>
+    <section class="intro">
+      <div>
+        <div class="eyebrow">THE SAME MOLECULE. TWO DEPICTIONS.</div>
+        <h1>What changes with ring templates?</h1>
+        <p>
+          Explore each ring template with a few different sidechains. Compare fresh 2D coordinates
+          with templates enabled and disabled.
+        </p>
+      </div>
+      <div class="stats" aria-live="polite">
+        <div><strong id="template-count">—</strong><span>templates</span></div>
+        <div><strong id="molecule-count">—</strong><span>molecules</span></div>
+        <div><strong id="changed-count">—</strong><span>changed pairs</span></div>
+      </div>
+    </section>
+    <main class="workspace">
+      <aside class="sidebar" aria-label="Browse templates">
+        <label class="search-label" for="search">Find a template</label
+        ><input
+          id="search"
+          type="search"
+          placeholder="Template ID, number or SMILES"
+          autocomplete="off"
+        />
+        <div class="filter-grid">
+          <label
+            >Show<select id="filter">
+              <option value="all">All templates</option>
+              <option value="changed">Layout differences</option>
+              <option value="flags">Geometry flags</option>
+              <option value="errors">Failures / limitations</option>
+            </select></label
+          ><label
+            >Sort<select id="sort">
+              <option value="number">Template order</option>
+              <option value="rmsd">Largest difference</option>
+              <option value="flags">Most flags</option>
+              <option value="size">Largest scaffold</option>
+            </select></label
+          >
+        </div>
+        <label class="substituent-label" for="substituent"
+          >Sidechain<select id="substituent">
+            <option value="all">All sidechains</option>
+          </select></label
+        >
+        <div class="list-caption"><span id="result-count">Loading…</span><span>MAX RMSD</span></div>
+        <nav id="template-list" class="template-list" aria-label="Template selection"></nav>
+        <p class="sidebar-note">
+          Geometry flags are inspection hints. Crossings and interior atoms can be intentional in
+          cage drawings.
+        </p>
+      </aside>
+      <section class="detail" aria-live="polite" aria-busy="true" id="detail">
+        <div class="empty">Loading the template collection…</div>
+      </section>
+    </main>
+    <footer>
+      Generated from public ring templates. Sidechains are highlighted in amber. Layout differences
+      use rotation and translation on the scaffold, with no reflection or rescaling.
+    </footer>
+    <dialog id="provenance">
+      <div class="dialog-top">
+        <h2>Build &amp; generation details</h2>
+        <button id="close-details" aria-label="Close build details">✕</button>
+      </div>
+      <div id="provenance-content"></div>
+      <a href="manifest.json" download>Download full manifest</a>
+    </dialog>
+    <template id="template-heading"
+      ><div class="template-heading">
+        <div class="heading-copy">
+          <div class="eyebrow template-id"></div>
+          <h2></h2>
+          <p class="template-description"></p>
+          <div class="legend">
+            <span class="swatch"></span> Sidechains highlighted <span class="divider">·</span> Same
+            atom order &amp; shared scale
+          </div>
+          <details class="reference-details">
+            <summary>Reference &amp; template source</summary>
+            <div class="reference-content"></div>
+          </details>
+        </div>
+        <div class="source-layout">
+          <span>Source template layout</span>
+          <div class="source-svg"></div>
+        </div>
+      </div>
+      <div class="case-toolbar">
+        <span class="case-count"></span
+        ><label><input type="checkbox" id="changed-only" /> Only changed molecules</label>
+        <div class="pager">
+          <button class="previous" aria-label="Previous template">←</button
+          ><button class="next" aria-label="Next template">→</button>
+        </div>
+      </div></template
+    >
+  </body>
+</html>

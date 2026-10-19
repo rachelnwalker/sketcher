@@ -1,2 +1,3 @@
 # Always keep main's version of version.json during merges
 version.json merge=ours
+docs/template-gallery/data/*.json.gz binary

@@ -1,0 +1,30 @@
+name: Validate template comparison gallery
+
+on:
+  pull_request:
+    paths:
+      - docs/template-gallery/**
+      - tools/template_gallery/**
+      - test/template_gallery/**
+      - .github/workflows/deploy-pages.yml
+      - .github/workflows/template-gallery.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - name: Check the complete generated collection
+        run: python3 tools/template_gallery/validate.py docs/template-gallery
+      - name: Check viewer syntax
+        run: node --check docs/template-gallery/gallery.js

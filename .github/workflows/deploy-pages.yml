@@ -4,6 +4,15 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - docs/template-gallery/**
+      - tools/template_gallery/**
+      - test/template_gallery/**
+      - .github/workflows/deploy-gallery.yml
+      - .github/workflows/deploy-pages.yml
+      - .github/workflows/template-gallery.yml
+      - .gitattributes
+      - README.md
   workflow_dispatch:
     inputs:
       ref:
@@ -33,12 +42,17 @@ jobs:
     needs: build
     runs-on: ubuntu-22.04
     permissions:
+      contents: read
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
       - name: Download WebAssembly build
         uses: actions/download-artifact@v7
         with:
@@ -47,7 +61,9 @@ jobs:
 
       - name: Prepare site
         run: |
+          python3 tools/template_gallery/validate.py docs/template-gallery
           mv site/wasm_shell.html site/index.html
+          cp -R docs/template-gallery site/template-gallery
           touch site/.nojekyll
 
       - name: Configure GitHub Pages
